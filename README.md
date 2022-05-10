@@ -51,28 +51,29 @@ class EndpointsConfig(AppConfig):
     name = 'apps.endpoints'
 ```
 9. Edit apps/endpoints/models.py
-Since only one model is allowed, no longer tracking active status. 
+Only one ml model is allowed to upload here
 ```
+# Create your models here.
 class Endpoints(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length = 128)
     owner = models.CharField(max_length=128)
     created_date = models.DateTimeField(auto_now_add=True, blank=True)
 
 class MLAlgorithm(models.Model):
-    name = models.CharField(max_length=128)
-    code = models.CharField(max_length=500000)
-    description = models.CharField(max_length=128)
-    version = models.CharField(max_length=128)
-    parent_endpoint = models.ForeignKey(Endpoints, on_delete=models.CASCADE)
+    name = models.CharField(max_length = 128)
+    status = models.CharField(max_length = 128)
+    code = models.CharField(max_length = 10000000)
     created_date = models.DateTimeField(auto_now_add=True, blank=True)
-    status = models.CharField(max_length=128, default='')
+    description = models.CharField(max_length = 1000)
+    parent_endpoint = models.ForeignKey(Endpoints, on_delete=models.CASCADE)
+    version = models.CharField(max_length = 128)
 
 class MLRequest(models.Model):
-    input_data = models.CharField(max_length=1000000)
-    response = models.CharField(max_length = 1000000, default='')
-    full_response = models.CharField(max_length=1000000)
-    created_date = models.DateField(auto_now_add=True, blank=True)
-    parent_mlalgorithm = models.ForeignKey(MLAlgorithm, on_delete=models.CASCADE)
+    input_data = models.CharField(max_length = 100000000)
+    response = models.CharField(max_length = 1000000000)
+    full_response = models.CharField(max_length =1000000000)
+    parent_algorithm = models.ForeignKey(MLAlgorithm, on_delete=models.CASCADE)
+    created_date = models.DateTimeField(auto_now_add=True, blank=True)
 ```
 
 8. Good time to migrate the fields into the db. 
@@ -80,8 +81,11 @@ class MLRequest(models.Model):
 python3 manage.py makemigrations
 python3 manage.py migrate
 ```
-9. Add [apps/endpoints/serializers.py](https://github.com/pen1064/misty_dc_light/blob/main/apps/endpoints/serializers.py)
+9. Add [apps/endpoints/serializers.py](https://github.com/pen1064/credit_default/blob/main/apps/endpoints/serializers.py)
 ```
+from apps.endpoints.models import Endpoints, MLAlgorithm, MLRequest
+from rest_framework import serializers
+
 class EndpointsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Endpoints
@@ -91,18 +95,14 @@ class EndpointsSerializer(serializers.ModelSerializer):
 class MLAlgorithmSerializer(serializers.ModelSerializer):
     class Meta:
         model = MLAlgorithm
-        read_only_fields=('id', 'name', 'code','description', 'version', 'created_date', 'parent_endpoint', 'status')
+        read_only_fields = ('id', 'status', 'code', 'created_date', 'description', 'parent_endpoint', 'version')
         fields = read_only_fields
 
-    
 class MLRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = MLRequest
-        read_only_fields = ("id","input_data","response","full_response",
-        "created_date", "parent_mlalgorithm")
-
-        fields =  ("id","input_data","response","full_response",
-        "created_date", "parent_mlalgorithm")
+        read_only_fields = ('id', 'input_data', 'response', 'full_response', 'created_date', 'parent_algorithm')
+        fields = read_only_fields
 ```
 10. Edit [apps/endpoints/views.py](https://github.com/pen1064/misty_dc_light/blob/main/apps/endpoints/views.py)
 There are three basic views in total (each one for each model):\
@@ -116,37 +116,39 @@ The last one will be PredictView (for user to innput prediction, only POST)
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import EndpointsViewSet, MLAlgorithmViewSet, MLRequestViewSet, PredictView
+
+router = DefaultRouter(trailing_slash=False)
 router.register(r"endpoints", EndpointsViewSet, basename="endpoints")
 router.register(r"mlalgorithms", MLAlgorithmViewSet, basename="mlalgorithms")
 router.register(r"mlrequests", MLRequestViewSet, basename="mlrequests")
 
 urlpatterns = [
     path(r"api/v1/", include(router.urls)),
-    path(r"api/v1/classifier/predict", PredictView.as_view(), name='predict')
-]
+    path(r"api/v1/classifier/predict", PredictView.as_view(), name='predict')]
 ```
 12. Make a class for the ML moodel, and ofc test it!
 
 13. Make registry to add connect the ML to server side -> [apps/ml/registry.py](https://github.com/pen1064/misty_dc_light/blob/main/apps/ml/registry.py)
 ```
-  class MLRegistry:
+from apps.endpoints.models import Endpoints, MLAlgorithm 
+class MLRegistry:
     def __init__(self):
         self.endpoints={}
-          
-    def add_algorithm(self, endpoint_name, alg_obj, alg_name, alg_status, alg_ver, alg_owner, alg_description, alg_code):
+        
+    def add_algorithm(self, endpoint_name, alg_obj, alg_status, alg_name, alg_ver, alg_description, alg_code, alg_owner):
         endpoint, _ = Endpoints.objects.get_or_create(name=endpoint_name, owner=alg_owner)
-
+        
         if MLAlgorithm.objects.filter(parent_endpoint = endpoint).exists():
-            MLAlgorithm.objects.filter(parent_endpoint = endpoint).update(code=alg_code, description=alg_description, 
-        version = alg_ver, status=alg_status, name = alg_name)
+            MLAlgorithm.objects.filter(parent_endpoint = endpoint).update(code=alg_code, description=alg_description, version=alg_ver, status=alg_status, name=alg_name)
         else:
-            MLAlgorithm.objects.get_or_create(parent_endpoint=endpoint,code=alg_code, description=alg_description, version = alg_ver, status=alg_status, name = alg_name)
+            MLAlgorithm.objects.get_or_create(parent_endpoint = endpoint, code=alg_code, description=alg_description, version=alg_ver, status=alg_status, name=alg_name)
+
         self.endpoints = alg_obj
  ```
 14. Definitely put some test case to test your registry 
 12. Double Check asgi.py 
 ```
-  os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'misty_dc.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_challenge.settings')
 ```
 13. Edit urls.py
 ```
@@ -155,14 +157,17 @@ urlpatterns = [
 ```
 15. Use [wsgi.py](https://github.com/pen1064/misty_dc_light/blob/main/misty_dc/wsgi.py) to add MLAlgorithm 
 ```
-    import inspect
-    from apps.ml.registry import MLRegistry
-    from apps.ml.xgb_model import XGBClassifier
-    registry = MLRegistry()
-    xgb = XGBClassifier()
-    registry.add_algorithm(endpoint_name = 'classifier', alg_obj = xgb, alg_name = 'xgboost',
-            alg_status = 'production', alg_ver='0.0.1', alg_owner='pusheen',alg_description='xgb 1', 
-            alg_code = inspect.getsource(XGBClassifier))
+from apps.ml.registry import MLRegistry
+from apps.ml.classifier.xgb_model import MLModel
+import inspect
+registry = MLRegistry()
+xgb = MLModel()
+try:
+    registry.add_algorithm(endpoint_name='classifier', alg_obj=xgb, alg_status='production', 
+    alg_name='xgb', alg_ver='1.0.0', alg_description='first', alg_owner='pk', 
+    alg_code = inspect.getsource(MLModel))
+except Exception as e:
+    print('exception', str(e))
 ```
 16. Corss your finger hopes everything will workout!
 <img width="611" alt="image" src="https://user-images.githubusercontent.com/45325095/167357185-1c6feab1-7a48-450f-b919-dde7fa0f5fed.png">
