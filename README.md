@@ -11,7 +11,7 @@ pip3 install django
 2. Start project 
 ```
 cd backend
-django-admin startproject mysite
+django-admin startproject mysite #in here mysite = credit_challenge
 cd mysite folder
 pip3 install djangrestframework
 pip3 install markdown
