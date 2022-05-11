@@ -26,7 +26,6 @@ class MLRequestViewSet(mixins.RetrieveModelMixin,
 class PredictView(views.APIView):
     def post(self, request, endpoint_name='classifier', format=None):
         alg = MLAlgorithm.objects.filter(parent_endpoint__name = endpoint_name)
-        print(alg)
         if alg is None:
             return Response({'status':'error'})
         else:
@@ -35,7 +34,5 @@ class PredictView(views.APIView):
             label = prediction['label'] if 'label' in prediction else 'error'
             mlrequest = MLRequest(input_data= json.dumps(request.data), full_response=prediction, response=label, parent_algorithm=alg[0])
             mlrequest.save()
-
             prediction['request_id'] = mlrequest.id
-
             return Response(prediction)
