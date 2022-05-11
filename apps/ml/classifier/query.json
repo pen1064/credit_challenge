@@ -1,0 +1,13 @@
+{
+    "Id": 123, 
+    "RevolvingUtilizationOfUnsecuredLines":0.5687887921,
+    "age":45,
+    "NumberOfTime30-59DaysPastDueNotWorse":2,
+    "DebtRatio":2.3143490976,
+    "MonthlyIncome":9.1183347262,
+    "NumberOfOpenCreditLinesAndLoans":13,
+    "NumberOfTimes90DaysLate":0,
+    "NumberRealEstateLoansOrLines":6,
+    "NumberOfTime60-89DaysPastDueNotWorse":0,
+    "NumberOfDependents":2.0
+}
