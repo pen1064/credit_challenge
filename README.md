@@ -176,7 +176,7 @@ except Exception as e:
 <img width="600" alt="image" src="https://user-images.githubusercontent.com/45325095/167356842-1b21982b-94c0-4bd3-865e-97245883907e.png">
 <img width="630" alt="image" src="https://user-images.githubusercontent.com/45325095/167356940-d9fd4387-c9e7-4644-82ae-d5788591140e.png">
 
-17. Test it out with query, copy and past the query from [here](https://github.com/pen1064/misty_dc_light/blob/main/apps/endpoints/query.json)
+17. Test it out with query, copy and past the query from [here](https://github.com/pen1064/credit_challenge/blob/main/apps/ml/classifier/query.json)
 
 19. Start creating Dockerfile and docker-compose yaml 
 ```
