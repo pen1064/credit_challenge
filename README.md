@@ -41,7 +41,6 @@ apps.ml is where you put your model for different endpoints
       'rest_framework',
       'apps.endpoints',
       'apps.ml'] 
-  ROOT_URLCONF = 'misty_dc.urls' #make sure it's same as whatever project that you make 
   SECRET_KEY = 'django-insecure-' # delete just for security reason
 ```
 7. Edit apps/endpoints/apps.py, such that it knows the endpoints folder has moved into the apps folder
@@ -53,6 +52,8 @@ class EndpointsConfig(AppConfig):
 9. Edit apps/endpoints/models.py
 Only one ml model is allowed to upload here
 ```
+from django.db import models
+
 # Create your models here.
 class Endpoints(models.Model):
     name = models.CharField(max_length = 128)
@@ -81,7 +82,7 @@ class MLRequest(models.Model):
 python3 manage.py makemigrations
 python3 manage.py migrate
 ```
-9. Add [apps/endpoints/serializers.py](https://github.com/pen1064/credit_default/blob/main/apps/endpoints/serializers.py)
+9. Add [apps/endpoints/serializers.py](https://github.com/pen1064/credit_challenge/blob/main/apps/endpoints/serializers.py)
 ```
 from apps.endpoints.models import Endpoints, MLAlgorithm, MLRequest
 from rest_framework import serializers
@@ -104,14 +105,14 @@ class MLRequestSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'input_data', 'response', 'full_response', 'created_date', 'parent_algorithm')
         fields = read_only_fields
 ```
-10. Edit [apps/endpoints/views.py](https://github.com/pen1064/misty_dc_light/blob/main/apps/endpoints/views.py)
+10. Edit [apps/endpoints/views.py](https://github.com/pen1064/credit_challenge/blob/main/apps/endpoints/views.py)
 There are three basic views in total (each one for each model):\
    10.1 EndpointsViewSet\
    10.2 MLAlgorithmViewSet\
    10.3 MLRequestViewSet (store the requests made)\
 The last one will be PredictView (for user to innput prediction, only POST) 
 
-11. Create [apps/endpoints/urls.py](https://github.com/pen1064/misty_dc_light/blob/main/apps/endpoints/urls.py) Add the links to urls (server side)
+11. Create [apps/endpoints/urls.py](https://github.com/pen1064/credit_challenge/blob/main/apps/endpoints/urls.py) Add the links to urls (server side)
 ```
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
@@ -128,7 +129,7 @@ urlpatterns = [
 ```
 12. Make a class for the ML moodel, and ofc test it!
 
-13. Make registry to add connect the ML to server side -> [apps/ml/registry.py](https://github.com/pen1064/misty_dc_light/blob/main/apps/ml/registry.py)
+13. Make registry to add connect the ML to server side -> [apps/ml/registry.py](https://github.com/pen1064/credit_challenge/blob/main/apps/ml/registry.py)
 ```
 from apps.endpoints.models import Endpoints, MLAlgorithm 
 class MLRegistry:
@@ -155,7 +156,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'credit_challenge.settings')
   from apps.endpoints.urls import urlpatterns as endpoints_urlpatterns
   urlpatterns += endpoints_urlpatterns
 ```
-15. Use [wsgi.py](https://github.com/pen1064/misty_dc_light/blob/main/misty_dc/wsgi.py) to add MLAlgorithm 
+15. Use [wsgi.py](https://github.com/pen1064/credit_challenge/blob/main/credit_challenge/wsgi.py) to add MLAlgorithm 
 ```
 from apps.ml.registry import MLRegistry
 from apps.ml.classifier.xgb_model import MLModel
